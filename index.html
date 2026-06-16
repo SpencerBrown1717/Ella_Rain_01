@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>ELARIN</title>
+<meta name="description" content="ELARIN — Ella Rain. Found beside the work." />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;700&family=Space+Mono:wght@400&display=swap" rel="stylesheet" />
+
+<style>
+  :root{
+    --bg:    #050810;
+    --ink:   #eaf1ff;
+    --dim:   #7d92bd;
+    --faint: #44557a;
+    --blue:  #4d9bff;
+    --blue-2:#8fc4ff;
+    --hair:  rgba(140,170,230,0.16);
+  }
+  *{ margin:0; padding:0; box-sizing:border-box; }
+  html,body{ height:100%; overflow:hidden; background:var(--bg); }
+  body{
+    font-family:'Space Grotesk', system-ui, sans-serif;
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+    position:relative;
+  }
+  ::selection{ background:var(--blue); color:#04060c; }
+  a{ color:inherit; text-decoration:none; }
+
+  /* the rain canvas — full bleed, behind everything */
+  #rain{ position:fixed; inset:0; width:100%; height:100%; z-index:0; display:block; }
+
+  /* blue glow pooled under the name for depth */
+  .glow{
+    position:fixed; left:50%; top:46%; transform:translate(-50%,-50%);
+    width:min(70vw,560px); height:min(40vh,360px); z-index:0; pointer-events:none;
+    background:radial-gradient(closest-side, rgba(77,155,255,0.16), transparent 72%);
+    filter:blur(8px);
+  }
+
+  /* centered stage — always one screen, never scrolls */
+  .stage{
+    position:relative; z-index:2;
+    height:100svh; width:100%;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    text-align:center;
+    padding:max(28px, env(safe-area-inset-top)) 24px max(28px, env(safe-area-inset-bottom));
+    gap:0;
+  }
+
+  .eyebrow{
+    font-family:'Space Mono', monospace;
+    font-size:clamp(0.6rem, 2.6vw, 0.72rem);
+    letter-spacing:0.32em; text-transform:uppercase;
+    color:var(--dim);
+    display:inline-flex; align-items:center; gap:10px;
+    margin-bottom:clamp(22px,5vh,40px);
+  }
+  .eyebrow .dot{
+    width:6px; height:6px; border-radius:50%; background:var(--blue);
+    box-shadow:0 0 0 0 rgba(77,155,255,0.7);
+    animation:pulse 2.6s infinite;
+  }
+  @keyframes pulse{
+    0%{ box-shadow:0 0 0 0 rgba(77,155,255,0.55); }
+    70%{ box-shadow:0 0 0 8px rgba(77,155,255,0); }
+    100%{ box-shadow:0 0 0 0 rgba(77,155,255,0); }
+  }
+
+  .name{
+    font-weight:500;
+    font-size:clamp(3.4rem, 17vw, 9.5rem);
+    line-height:0.9;
+    letter-spacing:0.04em;
+    color:var(--ink);
+    text-shadow:0 0 36px rgba(77,155,255,0.28);
+  }
+  .name b{ font-weight:700; }
+
+  .real{
+    font-family:'Space Mono', monospace;
+    font-size:clamp(0.62rem,3vw,0.78rem);
+    letter-spacing:0.42em; text-transform:uppercase;
+    color:var(--dim);
+    margin-top:clamp(14px,2.6vh,22px);
+  }
+
+  .rule{
+    width:38px; height:1px; background:var(--hair);
+    margin:clamp(26px,5vh,40px) 0 clamp(22px,4vh,34px);
+  }
+
+  .line{
+    font-weight:300;
+    font-size:clamp(1.05rem, 4.6vw, 1.7rem);
+    line-height:1.4;
+    color:var(--ink);
+    max-width:22ch;
+    min-height:2.8em; /* reserve space so layout never jumps when text rotates */
+    display:flex; align-items:center; justify-content:center;
+    transition:opacity .7s ease;
+  }
+  .line .hl{ color:var(--blue-2); }
+
+  .links{
+    display:flex; align-items:center; gap:clamp(18px,5vw,30px);
+    margin-top:clamp(26px,5vh,42px);
+    font-family:'Space Mono', monospace;
+    font-size:clamp(0.66rem,3vw,0.76rem);
+    letter-spacing:0.18em; text-transform:uppercase;
+  }
+  .links a{ color:var(--dim); padding-bottom:5px; border-bottom:1px solid transparent;
+    transition:color .25s, border-color .25s; }
+  .links a:hover{ color:var(--ink); border-color:var(--blue); }
+  .links .sep{ width:3px; height:3px; border-radius:50%; background:var(--faint); }
+
+  footer{
+    position:fixed; left:0; right:0; bottom:max(16px, env(safe-area-inset-bottom));
+    z-index:2; text-align:center;
+    font-family:'Space Mono', monospace;
+    font-size:clamp(0.56rem,2.4vw,0.66rem);
+    letter-spacing:0.24em; text-transform:uppercase;
+    color:var(--faint);
+  }
+
+  :focus-visible{ outline:2px solid var(--blue); outline-offset:4px; border-radius:2px; }
+
+  @media (prefers-reduced-motion:reduce){
+    .eyebrow .dot{ animation:none; }
+    .line{ transition:none; }
+  }
+</style>
+</head>
+<body>
+  <canvas id="rain"></canvas>
+  <div class="glow"></div>
+
+  <main class="stage">
+    <span class="eyebrow"><span class="dot"></span> Found beside the work</span>
+
+    <h1 class="name">ELARIN</h1>
+    <div class="real">Ella&nbsp;Rain</div>
+
+    <div class="rule"></div>
+
+    <p class="line" id="line" aria-live="polite">
+      Nothing lasts, which is exactly why it <span class="hl">matters</span>.
+    </p>
+
+    <nav class="links">
+      <a href="mailto:hello@elarin.com">Say&nbsp;hello</a>
+      <span class="sep"></span>
+      <a href="#" id="more">See&nbsp;more</a>
+    </nav>
+  </main>
+
+  <footer>Everything is temporary · © 2026</footer>
+
+<script>
+(function(){
+  const canvas = document.getElementById('rain');
+  const ctx = canvas.getContext('2d');
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  let W, H, DPR, drops = [], splashes = [], waterline;
+
+  function resize(){
+    DPR = Math.min(window.devicePixelRatio || 1, 2);
+    W = window.innerWidth; H = window.innerHeight;
+    canvas.width = W * DPR; canvas.height = H * DPR;
+    canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+    waterline = H * 0.94;
+    build();
+  }
+
+  function rand(a,b){ return a + Math.random()*(b-a); }
+
+  function makeDrop(top){
+    // layer 0 = far/dim/slow, 1 = mid, 2 = near/bright/fast
+    const layer = Math.random() < 0.55 ? 0 : (Math.random() < 0.7 ? 1 : 2);
+    const depth = [0.42, 0.7, 1][layer];
+    return {
+      layer,
+      x: rand(-40, W + 40),
+      y: top ? rand(-H, 0) : rand(0, waterline),
+      len: rand(10, 26) * depth + 6,
+      vy: (rand(380, 620) * depth) / 60,       // px per frame-ish
+      vx: rand(0.9, 1.7),                       // wind, slight rightward slant
+      w:  layer === 2 ? 1.5 : (layer === 1 ? 1.1 : 0.8),
+      a:  layer === 2 ? rand(0.55,0.85) : (layer === 1 ? rand(0.3,0.5) : rand(0.12,0.25)),
+      bright: layer === 2 && Math.random() < 0.18
+    };
+  }
+
+  function build(){
+    const target = Math.min(280, Math.floor((W * H) / 7000));
+    drops = [];
+    for(let i=0;i<target;i++) drops.push(makeDrop(false));
+    splashes = [];
+  }
+
+  function drawStatic(){
+    // reduced-motion: a calm, still field of faint blue streaks
+    ctx.clearRect(0,0,W,H);
+    for(const d of drops){
+      ctx.globalAlpha = d.a;
+      ctx.strokeStyle = '#4d9bff';
+      ctx.lineWidth = d.w;
+      ctx.beginPath();
+      ctx.moveTo(d.x, d.y);
+      ctx.lineTo(d.x - d.vx*0.6*d.len*0.4, d.y - d.len);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function tick(){
+    ctx.clearRect(0,0,W,H);
+    ctx.lineCap = 'round';
+
+    for(const d of drops){
+      const tailX = d.x - d.vx * (d.len/8);
+      const tailY = d.y - d.len;
+
+      const g = ctx.createLinearGradient(tailX, tailY, d.x, d.y);
+      if(d.bright){
+        g.addColorStop(0, 'rgba(143,196,255,0)');
+        g.addColorStop(1, 'rgba(180,220,255,' + d.a + ')');
+      }else{
+        g.addColorStop(0, 'rgba(60,120,230,0)');
+        g.addColorStop(1, 'rgba(110,170,255,' + d.a + ')');
+      }
+      ctx.strokeStyle = g;
+      ctx.lineWidth = d.w;
+      ctx.beginPath();
+      ctx.moveTo(tailX, tailY);
+      ctx.lineTo(d.x, d.y);
+      ctx.stroke();
+
+      // glow head on near bright drops
+      if(d.bright){
+        ctx.globalAlpha = d.a * 0.5;
+        ctx.fillStyle = '#bfe0ff';
+        ctx.beginPath();
+        ctx.arc(d.x, d.y, d.w*1.1, 0, Math.PI*2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+      }
+
+      d.x += d.vx;
+      d.y += d.vy;
+
+      if(d.y >= waterline){
+        // splash for near drops only (keeps it light)
+        if(d.layer === 2 && Math.random() < 0.5){
+          splashes.push({ x:d.x, y:waterline, r:1, max:rand(5,11), a:d.a*0.7 });
+        }
+        Object.assign(d, makeDrop(true));
+      }
+    }
+
+    // splashes — tiny expanding rings on the unseen surface
+    for(let i=splashes.length-1;i>=0;i--){
+      const s = splashes[i];
+      s.r += 0.5; s.a -= 0.03;
+      if(s.a <= 0){ splashes.splice(i,1); continue; }
+      ctx.globalAlpha = s.a;
+      ctx.strokeStyle = '#9cc7ff';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.ellipse(s.x, s.y, s.r, s.r*0.32, 0, 0, Math.PI*2);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+
+    requestAnimationFrame(tick);
+  }
+
+  window.addEventListener('resize', resize, { passive:true });
+  resize();
+
+  if(reduce){ drawStatic(); }
+  else{ requestAnimationFrame(tick); }
+
+  // gentle existential-optimist rotation
+  if(!reduce){
+    const lines = [
+      'Nothing lasts, which is exactly why it <span class="hl">matters</span>.',
+      'We are brief, and that is the <span class="hl">good news</span>.',
+      'The rain stops. The light always <span class="hl">comes back</span>.',
+      'Make something beautiful with the <span class="hl">time you get</span>.'
+    ];
+    const el = document.getElementById('line');
+    let i = 0;
+    setInterval(()=>{
+      el.style.opacity = 0;
+      setTimeout(()=>{
+        i = (i+1) % lines.length;
+        el.innerHTML = lines[i];
+        el.style.opacity = 1;
+      }, 700);
+    }, 5200);
+  }
+})();
+</script>
+</body>
+</html>
